@@ -24,8 +24,8 @@
 #include "Converter.h"
 #include "G2oTypes.h"
 #include "Optimizer.h"
-#include "Pinhole.h"
-#include "KannalaBrandt8.h"
+#include "CameraModels/Pinhole.h"
+#include "CameraModels/KannalaBrandt8.h"
 #include "MLPnPsolver.h"
 #include "GeometricTools.h"
 
@@ -41,12 +41,42 @@ namespace ORB_SLAM3
 {
 
 
-Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Atlas *pAtlas, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq):
-    mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
-    mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
-    mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
-    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
-    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL))
+Tracking::Tracking(
+    System *pSys,
+    ORBVocabulary* pVoc,
+    FrameDrawer *pFrameDrawer,
+    MapDrawer *pMapDrawer,
+    Atlas *pAtlas,
+    KeyFrameDatabase* pKFDB,
+    const string &strSettingPath,
+    const int sensor,
+    Settings* settings,
+    const string &_nameSeq
+) :
+    mState(NO_IMAGES_YET),
+    mSensor(sensor),
+    mTrackedFr(0),
+    mbStep(false),
+    mbOnlyTracking(false),
+    mbMapUpdated(false),
+    mbVO(false),
+    mpORBVocabulary(pVoc),
+    mpKeyFrameDB(pKFDB),
+    mbReadyToInitializate(false),
+    mpSystem(pSys),
+    mpViewer(nullptr),
+    mpFrameDrawer(pFrameDrawer),
+    mpMapDrawer(pMapDrawer),
+    bStepByStep(false),
+    mpAtlas(pAtlas),
+    mnFramesToResetIMU(0),
+    mpLastKeyFrame(nullptr),
+    mnLastRelocFrameId(0),
+    time_recently_lost(5.0),
+    mnFirstFrameId(0),
+    mnInitialFrameId(0),
+    mbCreatedMap(false),
+    mpCamera2(nullptr)
 {
     // Load camera parameters from settings file
     if(settings){
@@ -625,7 +655,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
     string sCameraName = fSettings["Camera.type"];
     if(sCameraName == "PinHole")
     {
-        float fx, fy, cx, cy;
+        float fx = 0.f, fy = 0.f, cx = 0.f, cy = 0.f;
         mImageScale = 1.f;
 
         // Camera calibration parameters
@@ -781,8 +811,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
     }
     else if(sCameraName == "KannalaBrandt8")
     {
-        float fx, fy, cx, cy;
-        float k1, k2, k3, k4;
+        float fx = 0.f, fy = 0.f, cx = 0.f, cy = 0.f;
+        float k1 = 0.f, k2 = 0.f, k3 = 0.f, k4 = 0.f;
         mImageScale = 1.f;
 
         // Camera calibration parameters
@@ -1217,8 +1247,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
 bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
 {
     bool b_miss_params = false;
-    int nFeatures, nLevels, fIniThFAST, fMinThFAST;
-    float fScaleFactor;
+    int nFeatures = 0, nLevels = 0, fIniThFAST = 0, fMinThFAST = 0;
+    float fScaleFactor = 0.f;
 
     cv::FileNode node = fSettings["ORBextractor.nFeatures"];
     if(!node.empty() && node.isInt())
@@ -1335,7 +1365,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
 
 
 
-    float Ng, Na, Ngw, Naw;
+    float Ng = 0.f, Na = 0.f, Ngw = 0.f, Naw = 0.f;
 
     node = fSettings["IMU.Frequency"];
     if(!node.empty() && node.isInt())
@@ -1923,7 +1953,7 @@ void Tracking::Track()
     else
     {
         // System is initialized. Track Frame.
-        bool bOK;
+        bool bOK = false;
 
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartPosePred = std::chrono::steady_clock::now();
@@ -2164,8 +2194,10 @@ void Tracking::Track()
         }
 
         // Save frame if recent relocalization, since they are used for IMU reset (as we are making copy, it shluld be once mCurrFrame is completely modified)
-        if((mCurrentFrame.mnId<(mnLastRelocFrameId+mnFramesToResetIMU)) && (mCurrentFrame.mnId > mnFramesToResetIMU) &&
-           (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && pCurrentMap->isImuInitialized())
+        if (mCurrentFrame.mnId < mnLastRelocFrameId + mnFramesToResetIMU &&
+            mCurrentFrame.mnId > static_cast<unsigned long>(mnFramesToResetIMU) &&
+            (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) &&
+            pCurrentMap->isImuInitialized())
         {
             // TODO check this situation
             Verbose::PrintMess("Saving pointer to frame. imu needs reset...", Verbose::VERBOSITY_NORMAL);
@@ -2966,7 +2998,7 @@ bool Tracking::TrackLocalMap()
                 aux2++;
         }
 
-    int inliers;
+    // int inliers;
     if (!mpAtlas->isImuInitialized())
         Optimizer::PoseOptimization(&mCurrentFrame);
     else
@@ -2982,12 +3014,12 @@ bool Tracking::TrackLocalMap()
             if(!mbMapUpdated) //  && (mnMatchesInliers>30))
             {
                 Verbose::PrintMess("TLM: PoseInertialOptimizationLastFrame ", Verbose::VERBOSITY_DEBUG);
-                inliers = Optimizer::PoseInertialOptimizationLastFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
+                Optimizer::PoseInertialOptimizationLastFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
             }
             else
             {
                 Verbose::PrintMess("TLM: PoseInertialOptimizationLastKeyFrame ", Verbose::VERBOSITY_DEBUG);
-                inliers = Optimizer::PoseInertialOptimizationLastKeyFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
+                Optimizer::PoseInertialOptimizationLastKeyFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
             }
         }
     }
@@ -3410,7 +3442,7 @@ void Tracking::SearchLocalPoints()
         if(mState==LOST || mState==RECENTLY_LOST) // Lost for less than 1 second
             th=15; // 15
 
-        int matches = matcher.SearchByProjection(mCurrentFrame, mvpLocalMapPoints, th, mpLocalMapper->mbFarPoints, mpLocalMapper->mThFarPoints);
+        matcher.SearchByProjection(mCurrentFrame, mvpLocalMapPoints, th, mpLocalMapper->mbFarPoints, mpLocalMapper->mThFarPoints);
     }
 }
 
@@ -3980,7 +4012,7 @@ void Tracking::InformOnlyTracking(const bool &flag)
 void Tracking::UpdateFrameIMU(const float s, const IMU::Bias &b, KeyFrame* pCurrentKeyFrame)
 {
     Map * pMap = pCurrentKeyFrame->GetMap();
-    unsigned int index = mnFirstFrameId;
+    // unsigned int index = mnFirstFrameId;
     list<ORB_SLAM3::KeyFrame*>::iterator lRit = mlpReferences.begin();
     list<bool>::iterator lbL = mlbLost.begin();
     for(auto lit=mlRelativeFramePoses.begin(),lend=mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lbL++)

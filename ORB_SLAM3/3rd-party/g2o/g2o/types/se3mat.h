@@ -14,7 +14,7 @@ public:
         t.setZero();
     }
 
-    SE3mat(const Eigen::Matrix3d &R_, const Eigen::Vector3d &t_):R(R_),t(t_){}
+    SE3mat(const Eigen::Matrix3d &R_, const Eigen::Vector3d &t_) : R(R_), t(t_) {}
 
     void Retract(const Eigen::Vector3d dr, const Eigen::Vector3d &dt);
 
@@ -34,8 +34,8 @@ public:
     }
 
 protected:
-    Eigen::Vector3d t;
     Eigen::Matrix3d R;
+    Eigen::Vector3d t;
 
 public:
     static Eigen::Matrix3d ExpSO3(const Eigen::Vector3d r);

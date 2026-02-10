@@ -268,7 +268,7 @@ public:
 
     Eigen::Matrix3d Rwg, Rgw;
 
-    int its;
+    int its = 0;
 };
 
 class VertexGDir : public g2o::BaseVertex<2,GDirection>

@@ -24,6 +24,7 @@
 #include <pangolin/pangolin.h>
 #include <iomanip>
 #include <openssl/md5.h>
+#include <openssl/evp.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -38,10 +39,21 @@ namespace ORB_SLAM3
 
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
-System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer, const int initFr, const string &strSequence):
-    mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
-    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
+System::System(
+    const string &strVocFile,
+    const string &strSettingsFile,
+    const eSensor sensor,
+    const bool bUseViewer,
+    const int initFr,
+    const string &strSequence
+) :
+    mSensor(sensor),
+    mpViewer(static_cast<Viewer*>(NULL)),
+    mbReset(false),
+    mbResetActiveMap(false),
+    mbActivateLocalizationMode(false),
+    mbDeactivateLocalizationMode(false),
+    mbShutDown(false)
 {
     // Output welcome message
     cout << endl <<
@@ -107,7 +119,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     mStrVocabularyFilePath = strVocFile;
 
-    bool loadedAtlas = false;
+    // bool loadedAtlas = false;
 
     if(mStrLoadAtlasFromFile.empty())
     {
@@ -166,7 +178,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
         //cout << "KF in DB: " << mpKeyFrameDatabase->mnNumKFs << "; words: " << mpKeyFrameDatabase->mnNumWords << endl;
 
-        loadedAtlas = true;
+        // loadedAtlas = true;
 
         mpAtlas->CreateNewMap();
 
@@ -671,12 +683,12 @@ void System::SaveTrajectoryEuRoC(const string &filename)
 
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
     int numMaxKFs = 0;
-    Map* pBiggerMap;
+    Map* pBiggerMap = nullptr;
     std::cout << "There are " << std::to_string(vpMaps.size()) << " maps in the atlas" << std::endl;
     for(Map* pMap :vpMaps)
     {
         std::cout << "  Map " << std::to_string(pMap->GetId()) << " has " << std::to_string(pMap->GetAllKeyFrames().size()) << " KFs" << std::endl;
-        if(pMap->GetAllKeyFrames().size() > numMaxKFs)
+        if(pMap->GetAllKeyFrames().size() > static_cast<size_t>(numMaxKFs))
         {
             numMaxKFs = pMap->GetAllKeyFrames().size();
             pBiggerMap = pMap;
@@ -786,7 +798,7 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
         return;
     }*/
 
-    int numMaxKFs = 0;
+    // int numMaxKFs = 0;
 
     vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
@@ -1059,11 +1071,11 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
-    Map* pBiggerMap;
+    Map* pBiggerMap = nullptr;
     int numMaxKFs = 0;
     for(Map* pMap :vpMaps)
     {
-        if(pMap && pMap->GetAllKeyFrames().size() > numMaxKFs)
+        if(pMap && pMap->GetAllKeyFrames().size() > static_cast<size_t>(numMaxKFs))
         {
             numMaxKFs = pMap->GetAllKeyFrames().size();
             pBiggerMap = pMap;
@@ -1509,7 +1521,7 @@ string System::CalculateCheckSum(string filename, int type)
 {
     string checksum = "";
 
-    unsigned char c[MD5_DIGEST_LENGTH];
+    uint8_t c[MD5_DIGEST_LENGTH];
 
     std::ios_base::openmode flags = std::ios::in;
     if(type == BINARY_FILE) // Binary file
@@ -1522,18 +1534,19 @@ string System::CalculateCheckSum(string filename, int type)
         return checksum;
     }
 
-    MD5_CTX md5Context;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     char buffer[1024];
 
-    MD5_Init (&md5Context);
+    EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
     while ( int count = f.readsome(buffer, sizeof(buffer)))
     {
-        MD5_Update(&md5Context, buffer, count);
+        EVP_DigestUpdate(ctx, buffer, count);
     }
 
     f.close();
 
-    MD5_Final(c, &md5Context );
+
+    EVP_DigestFinal_ex(ctx, c, nullptr);
 
     for(int i = 0; i < MD5_DIGEST_LENGTH; i++)
     {
@@ -1541,6 +1554,8 @@ string System::CalculateCheckSum(string filename, int type)
         sprintf(aux,"%02x", c[i]);
         checksum = checksum + aux;
     }
+
+    EVP_MD_CTX_free(ctx);
 
     return checksum;
 }
