@@ -28,6 +28,7 @@ find_package(message_filters REQUIRED)
 # source file directory
 set(SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 
+
 # RGB-D solution
 set(RGBD_TARGET rgbd_node)
 add_executable(${RGBD_TARGET} ${SOURCE_DIR}/${RGBD_TARGET}.cpp)
@@ -43,6 +44,25 @@ target_link_libraries(${RGBD_TARGET} PRIVATE ORB_SLAM3)
 install(TARGETS ${RGBD_TARGET}
         DESTINATION lib/${PROJECT_NAME}
 )
+
+
+option(BUILD_EXAMPLE "Enable example build" ON)
+if(BUILD_EXAMPLE)
+    # RGBD TUM example
+    set(TUM_TARGET rgbd_tum_example)
+    add_executable(${TUM_TARGET} ${SOURCE_DIR}/${TUM_TARGET}.cpp)
+
+    ament_target_dependencies(${TUM_TARGET} PUBLIC
+        rclcpp
+        sensor_msgs
+    )
+    target_link_libraries(${TUM_TARGET} PRIVATE ORB_SLAM3)
+
+    install(TARGETS ${TUM_TARGET}
+            DESTINATION lib/${PROJECT_NAME}
+    )
+endif(BUILD_EXAMPLE)
+
 
 install(DIRECTORY launch ORB_SLAM3/config ORB_SLAM3/vocabulary
         DESTINATION share/${PROJECT_NAME}

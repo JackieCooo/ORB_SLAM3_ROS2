@@ -40,6 +40,9 @@
 # debug information files
 *.dwo
 
+# ROS files
+*.bag
+
 .vscode/
 build/
 log/
