@@ -24,11 +24,11 @@
 
 #include "DBoW2/BowVector.h"
 #include "DBoW2/FeatureVector.h"
+#include "DBoW2/DBoW2.h"
 
 #include "sophus/geometry.hpp"
 
 #include "ImuTypes.h"
-#include "ORBVocabulary.h"
 
 #include "Converter.h"
 #include "Settings.h"
@@ -65,7 +65,7 @@ public:
         const double &timeStamp,
         ORBextractor* extractorLeft,
         ORBextractor* extractorRight,
-        ORBVocabulary* voc,
+        OrbVocabulary* voc,
         cv::Mat &K,
         cv::Mat &distCoef,
         const float &bf,
@@ -81,7 +81,7 @@ public:
         const cv::Mat &imDepth,
         const double &timeStamp,
         ORBextractor* extractor,
-        ORBVocabulary* voc,
+        OrbVocabulary* voc,
         cv::Mat &K,
         cv::Mat &distCoef,
         const float &bf,
@@ -96,7 +96,7 @@ public:
         const cv::Mat &imGray,
         const double &timeStamp,
         ORBextractor* extractor,
-        ORBVocabulary* voc,
+        OrbVocabulary* voc,
         GeometricCamera* pCamera,
         cv::Mat &distCoef,
         const float &bf,
@@ -147,7 +147,7 @@ public:
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
-    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1, const bool bRight = false) const;
+    std::vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1, const bool bRight = false) const;
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
     // If there is a match, depth is computed and the right coordinate associated to the left keypoint is stored.
@@ -228,7 +228,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     // Vocabulary used for relocalization.
-    ORBVocabulary* mpORBvocabulary;
+    OrbVocabulary* mpORBvocabulary;
 
     // Feature extractor. The right is used only in the stereo case.
     ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
@@ -316,10 +316,10 @@ public:
     int mnScaleLevels;
     float mfScaleFactor;
     float mfLogScaleFactor;
-    vector<float> mvScaleFactors;
-    vector<float> mvInvScaleFactors;
-    vector<float> mvLevelSigma2;
-    vector<float> mvInvLevelSigma2;
+    std::vector<float> mvScaleFactors;
+    std::vector<float> mvInvScaleFactors;
+    std::vector<float> mvLevelSigma2;
+    std::vector<float> mvInvLevelSigma2;
 
     // Undistorted Image Bounds (computed once).
     static float mnMinX;
@@ -329,10 +329,10 @@ public:
 
     static bool mbInitialComputations;
 
-    map<long unsigned int, cv::Point2f> mmProjectPoints;
-    map<long unsigned int, cv::Point2f> mmMatchedInImage;
+    std::map<long unsigned int, cv::Point2f> mmProjectPoints;
+    std::map<long unsigned int, cv::Point2f> mmMatchedInImage;
 
-    string mNameFile;
+    std::string mNameFile;
 
     int mnDataset;
 
@@ -387,7 +387,7 @@ public:
         const double &timeStamp,
         ORBextractor* extractorLeft,
         ORBextractor* extractorRight,
-        ORBVocabulary* voc,
+        OrbVocabulary* voc,
         cv::Mat &K,
         cv::Mat &distCoef,
         const float &bf,
@@ -417,7 +417,7 @@ public:
                 else right++;
             }
         }
-        cout << "Point distribution in Frame: left-> " << left << " --- right-> " << right << endl;
+        std::cout << "Point distribution in Frame: left-> " << left << " --- right-> " << right << std::endl;
     }
 
     Sophus::SE3<double> T_test;

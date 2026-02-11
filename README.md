@@ -39,13 +39,7 @@ sudo apt install ros-humble-sophus
 
 ## How to Use
 
-### Prerequisites
-
-Unzip vocabulary file.
-
-```shell
-cd ORB_SLAM3/vocabulary && tar -xzf ORBvoc.txt.tar.gz
-```
+We use binary vocabulary file for faster loading and lower file size. The converted vocabulary file is placed in `ORB_SLAM3/vocabulary/ORBvoc.bin`. We also provide a python script for convertion in `asset/python/voc2bin.py`, in case you want to use your own vocabulary.
 
 ### Compile
 
@@ -67,4 +61,4 @@ ros2 launch orb_slam3 realsense_435i.launch.py
 - [ ] Make visualization optional
 - [ ] Support [Foxglove](https://foxglove.dev/homepage) for visualization
 - [ ] Implement RGB-D with inertial mode
-- [ ] Make vocabulary file binary
+- [x] Make vocabulary file binary

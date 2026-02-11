@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     auto node = std::make_shared<rclcpp::Node>("rgbd_tum");
 
     /* Declear parameters */
-    node->declare_parameter("voc_file", "ORBvoc.txt");
+    node->declare_parameter("voc_file", "ORBvoc.bin");
     node->declare_parameter("setting_file", "TUM.yaml");
     node->declare_parameter("sequence_dir", "fr1_xyz");
     node->declare_parameter("association_file", "fr1_xyz.txt");
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     float imageScale = SLAM.GetImageScale();
 
     // Vector for tracking time statistics
-    vector<int64_t> vTimesTrack;
+    std::vector<int64_t> vTimesTrack;
 
     // Main loop
     cv::Mat imRGB, imD;

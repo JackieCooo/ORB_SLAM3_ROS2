@@ -43,7 +43,7 @@ namespace ORB_SLAM3
 
 Tracking::Tracking(
     System *pSys,
-    ORBVocabulary* pVoc,
+    OrbVocabulary* pVoc,
     FrameDrawer *pFrameDrawer,
     MapDrawer *pMapDrawer,
     Atlas *pAtlas,
@@ -1647,7 +1647,7 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &times
 
 void Tracking::GrabImuData(const IMU::Point &imuMeasurement)
 {
-    unique_lock<mutex> lock(mMutexImuQueue);
+    std::unique_lock<std::mutex> lock(mMutexImuQueue);
     mlQueueImuData.push_back(imuMeasurement);
 }
 
@@ -1674,7 +1674,7 @@ void Tracking::PreintegrateIMU()
     {
         bool bSleep = false;
         {
-            unique_lock<mutex> lock(mMutexImuQueue);
+            std::unique_lock<std::mutex> lock(mMutexImuQueue);
             if(!mlQueueImuData.empty())
             {
                 IMU::Point* m = &mlQueueImuData.front();
@@ -1850,7 +1850,7 @@ void Tracking::Track()
         if(mLastFrame.mTimeStamp>mCurrentFrame.mTimeStamp)
         {
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
-            unique_lock<mutex> lock(mMutexImuQueue);
+            std::unique_lock<std::mutex> lock(mMutexImuQueue);
             mlQueueImuData.clear();
             CreateMapInAtlas();
             return;
@@ -1913,7 +1913,7 @@ void Tracking::Track()
     mbCreatedMap = false;
 
     // Get Map Mutex -> Map cannot be changed
-    unique_lock<mutex> lock(pCurrentMap->mMutexMapUpdate);
+    std::unique_lock<std::mutex> lock(pCurrentMap->mMutexMapUpdate);
 
     mbMapUpdated = false;
 
@@ -4118,13 +4118,13 @@ float Tracking::GetImageScale()
 #ifdef REGISTER_LOOP
 void Tracking::RequestStop()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     mbStopRequested = true;
 }
 
 bool Tracking::Stop()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     if(mbStopRequested && !mbNotStop)
     {
         mbStopped = true;
@@ -4137,19 +4137,19 @@ bool Tracking::Stop()
 
 bool Tracking::stopRequested()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     return mbStopRequested;
 }
 
 bool Tracking::isStopped()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     return mbStopped;
 }
 
 void Tracking::Release()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     mbStopped = false;
     mbStopRequested = false;
 }

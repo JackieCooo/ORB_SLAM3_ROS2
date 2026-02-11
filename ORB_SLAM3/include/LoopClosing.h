@@ -23,7 +23,7 @@
 #include "KeyFrame.h"
 #include "LocalMapping.h"
 #include "Atlas.h"
-#include "ORBVocabulary.h"
+#include "DBoW2/DBoW2.h"
 #include "Tracking.h"
 
 #include "KeyFrameDatabase.h"
@@ -46,13 +46,13 @@ class LoopClosing
 {
 public:
 
-    typedef pair<set<KeyFrame*>,int> ConsistentGroup;    
-    typedef map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
+    typedef std::pair<std::set<KeyFrame*>,int> ConsistentGroup;    
+    typedef std::map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
         Eigen::aligned_allocator<std::pair<KeyFrame* const, g2o::Sim3> > > KeyFrameAndPose;
 
 public:
 
-    LoopClosing(Atlas* pAtlas, KeyFrameDatabase* pDB, ORBVocabulary* pVoc,const bool bFixScale, const bool bActiveLC);
+    LoopClosing(Atlas* pAtlas, KeyFrameDatabase* pDB, OrbVocabulary* pVoc,const bool bFixScale, const bool bActiveLC);
 
     void SetTracker(Tracking* pTracker);
 
@@ -70,11 +70,11 @@ public:
     void RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoopKF);
 
     bool isRunningGBA(){
-        unique_lock<std::mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         return mbRunningGBA;
     }
     bool isFinishedGBA(){
-        unique_lock<std::mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         return mbFinishedGBA;
     }   
 
@@ -130,19 +130,19 @@ protected:
     bool DetectCommonRegionsFromLastKF(KeyFrame* pCurrentKF, KeyFrame* pMatchedKF, g2o::Sim3 &gScw, int &nNumProjMatches,
                                             std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs);
     int FindMatchesByProjection(KeyFrame* pCurrentKF, KeyFrame* pMatchedKFw, g2o::Sim3 &g2oScw,
-                                set<MapPoint*> &spMatchedMPinOrigin, vector<MapPoint*> &vpMapPoints,
-                                vector<MapPoint*> &vpMatchedMapPoints);
+                                std::set<MapPoint*> &spMatchedMPinOrigin, std::vector<MapPoint*> &vpMapPoints,
+                                std::vector<MapPoint*> &vpMatchedMapPoints);
 
 
-    void SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap, vector<MapPoint*> &vpMapPoints);
-    void SearchAndFuse(const vector<KeyFrame*> &vConectedKFs, vector<MapPoint*> &vpMapPoints);
+    void SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap, std::vector<MapPoint*> &vpMapPoints);
+    void SearchAndFuse(const std::vector<KeyFrame*> &vConectedKFs, std::vector<MapPoint*> &vpMapPoints);
 
     void CorrectLoop();
 
     void MergeLocal();
     void MergeLocal2();
 
-    void CheckObservations(set<KeyFrame*> &spKFsMap1, set<KeyFrame*> &spKFsMap2);
+    void CheckObservations(std::set<KeyFrame*> &spKFsMap1, std::set<KeyFrame*> &spKFsMap2);
 
     void ResetIfRequested();
     bool mbResetRequested;
@@ -160,7 +160,7 @@ protected:
     Tracking* mpTracker;
 
     KeyFrameDatabase* mpKeyFrameDB;
-    ORBVocabulary* mpORBVocabulary;
+    OrbVocabulary* mpORBVocabulary;
 
     LocalMapping *mpLocalMapper;
 
@@ -227,12 +227,12 @@ protected:
 
 
 
-    vector<double> vdPR_CurrentTime;
-    vector<double> vdPR_MatchedTime;
-    vector<int> vnPR_TypeRecogn;
+    std::vector<double> vdPR_CurrentTime;
+    std::vector<double> vdPR_MatchedTime;
+    std::vector<int> vnPR_TypeRecogn;
 
     //DEBUG
-    string mstrFolderSubTraj;
+    std::string mstrFolderSubTraj;
     int mnNumCorrection;
     int mnCorrectionGBA;
 
@@ -241,7 +241,7 @@ protected:
     bool mbActiveLC = true;
 
 #ifdef REGISTER_LOOP
-    string mstrFolderLoop;
+    std::string mstrFolderLoop;
 #endif
 };
 

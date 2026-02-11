@@ -37,29 +37,29 @@ FrameDrawer::FrameDrawer(Atlas* pAtlas):both(false),mpAtlas(pAtlas)
 cv::Mat FrameDrawer::DrawFrame(float imageScale)
 {
     cv::Mat im;
-    vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
-    vector<int> vMatches; // Initialization: correspondeces with reference keypoints
-    vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
-    vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
-    vector<pair<cv::Point2f, cv::Point2f> > vTracks;
+    std::vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
+    std::vector<int> vMatches; // Initialization: correspondeces with reference keypoints
+    std::vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
+    std::vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
+    std::vector<std::pair<cv::Point2f, cv::Point2f> > vTracks;
     int state; // Tracking state
-    vector<float> vCurrentDepth;
+    std::vector<float> vCurrentDepth;
 
     Frame currentFrame;
-    vector<MapPoint*> vpLocalMap;
-    vector<cv::KeyPoint> vMatchesKeys;
-    vector<MapPoint*> vpMatchedMPs;
-    vector<cv::KeyPoint> vOutlierKeys;
-    vector<MapPoint*> vpOutlierMPs;
-    map<long unsigned int, cv::Point2f> mProjectPoints;
-    map<long unsigned int, cv::Point2f> mMatchedInImage;
+    std::vector<MapPoint*> vpLocalMap;
+    std::vector<cv::KeyPoint> vMatchesKeys;
+    std::vector<MapPoint*> vpMatchedMPs;
+    std::vector<cv::KeyPoint> vOutlierKeys;
+    std::vector<MapPoint*> vpOutlierMPs;
+    std::map<long unsigned int, cv::Point2f> mProjectPoints;
+    std::map<long unsigned int, cv::Point2f> mMatchedInImage;
 
     cv::Scalar standardColor(0,255,0);
     cv::Scalar odometryColor(255,0,0);
 
     //Copy variables within scoped mutex
     {
-        unique_lock<mutex> lock(mMutex);
+        std::unique_lock<std::mutex> lock(mMutex);
         state=mState;
         if(mState==Tracking::SYSTEM_NOT_READY)
             mState=Tracking::NO_IMAGES_YET;
@@ -127,7 +127,7 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale)
                 cv::line(im,pt1,pt2,standardColor);
             }
         }
-        for(vector<pair<cv::Point2f, cv::Point2f> >::iterator it=vTracks.begin(); it!=vTracks.end(); it++)
+        for(auto it=vTracks.begin(); it!=vTracks.end(); it++)
         {
             cv::Point2f pt1,pt2;
             if(imageScale != 1.f)
@@ -201,15 +201,15 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale)
 cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
 {
     cv::Mat im;
-    vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
-    vector<int> vMatches; // Initialization: correspondeces with reference keypoints
-    vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
-    vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
+    std::vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
+    std::vector<int> vMatches; // Initialization: correspondeces with reference keypoints
+    std::vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
+    std::vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
 
     //Copy variables within scoped mutex
     {
-        unique_lock<mutex> lock(mMutex);
+        std::unique_lock<std::mutex> lock(mMutex);
         state=mState;
         if(mState==Tracking::SYSTEM_NOT_READY)
             mState=Tracking::NO_IMAGES_YET;
@@ -327,7 +327,7 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
 
 void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 {
-    stringstream s;
+    std::stringstream s;
     if(nState==Tracking::NO_IMAGES_YET)
         s << " WAITING FOR IMAGES";
     else if(nState==Tracking::NOT_INITIALIZED)
@@ -366,7 +366,7 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 
 void FrameDrawer::Update(Tracking *pTracker)
 {
-    unique_lock<mutex> lock(mMutex);
+    std::unique_lock<std::mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
     mThDepth = pTracker->mCurrentFrame.mThDepth;
@@ -381,8 +381,8 @@ void FrameDrawer::Update(Tracking *pTracker)
         N = mvCurrentKeys.size();
     }
 
-    mvbVO = vector<bool>(N,false);
-    mvbMap = vector<bool>(N,false);
+    mvbVO = std::vector<bool>(N,false);
+    mvbMap = std::vector<bool>(N,false);
     mbOnlyTracking = pTracker->mbOnlyTracking;
 
     //Variables for the new visualization

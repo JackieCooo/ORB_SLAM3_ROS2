@@ -29,7 +29,7 @@ def generate_launch_description():
             executable='rgbd_tum_example',
             name='rgbd_tum',
             parameters=[{
-                'voc_file': PathJoinSubstitution([FindPackageShare('orb_slam3'), 'vocabulary', 'ORBvoc.txt']),
+                'voc_file': PathJoinSubstitution([FindPackageShare('orb_slam3'), 'vocabulary', 'ORBvoc.bin']),
                 'setting_file': PathJoinSubstitution([FindPackageShare('orb_slam3'), 'config', 'TUM.yaml']),
                 'sequence_dir': LaunchConfiguration('sequence_dir'),
                 'association_file': LaunchConfiguration('association_file')
